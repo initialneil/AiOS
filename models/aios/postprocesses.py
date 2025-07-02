@@ -1155,14 +1155,23 @@ class PostProcess_SMPLX_Multi_Infer(nn.Module):
         
         if 'ann_idx' in data_batch_nc:
             # image_idx=[target.cpu().numpy()[0] for target in data_batch_nc['ann_idx']]
-            ann_idx = concat_iterative(data_batch_nc['ann_idx'].data)
+            if isinstance(data_batch_nc['ann_idx'], list):
+                ann_idx = concat_iterative(data_batch_nc['ann_idx'])
+            else:
+                ann_idx = concat_iterative(data_batch_nc['ann_idx'].data)
             image_idx = ann_idx.tolist()
 
         for bs in range(batch_size):
-            bb2img_trans = concat_iterative(data_batch_nc['bb2img_trans'].data)
-            img2bb_trans = concat_iterative(data_batch_nc['img2bb_trans'].data)
-            img = concat_iterative(data_batch_nc['img'].data)
-            img_shape = concat_iterative(data_batch_nc['img_shape'].data)
+            if isinstance(data_batch_nc['bb2img_trans'], list):
+                bb2img_trans = concat_iterative(data_batch_nc['bb2img_trans'])
+                img2bb_trans = concat_iterative(data_batch_nc['img2bb_trans'])
+                img = concat_iterative(data_batch_nc['img'])
+                img_shape = concat_iterative(data_batch_nc['img_shape'])
+            else:
+                bb2img_trans = concat_iterative(data_batch_nc['bb2img_trans'].data)
+                img2bb_trans = concat_iterative(data_batch_nc['img2bb_trans'].data)
+                img = concat_iterative(data_batch_nc['img'].data)
+                img_shape = concat_iterative(data_batch_nc['img_shape'].data)
         
             results.append({
                         'scores': scores[bs], 

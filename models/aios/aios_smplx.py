@@ -1843,8 +1843,10 @@ class AiOSSMPLX(nn.Module):
 
         data_batch_coco = []
         instance_dict = {}
-        # img_list = data_batch['img'].float()
-        img_list = torch.concat(data_batch['img'].data).float()
+        if isinstance(data_batch['img'].data, list):
+            img_list = torch.concat(data_batch['img'].data).float()
+        else:
+            img_list = data_batch['img'].float()
         img_shape = data_batch['img_shape']
 
         batch_size, _, input_img_h, input_img_w = img_list.shape
@@ -1926,8 +1928,13 @@ class AiOSSMPLX(nn.Module):
                                                     device=device)
                 data_batch_coco.append(instance_dict)               
             else:
-                body_bbox_center = concat_iterative(data_batch['body_bbox_center'].data)
-                body_bbox_size = concat_iterative(data_batch['body_bbox_size'].data)
+                if isinstance(data_batch['body_bbox_center'], list):
+                    body_bbox_center = concat_iterative(data_batch['body_bbox_center'])
+                    body_bbox_size = concat_iterative(data_batch['body_bbox_size'])
+                else:
+                    body_bbox_center = concat_iterative(data_batch['body_bbox_center'].data)
+                    body_bbox_size = concat_iterative(data_batch['body_bbox_size'].data)
+
                 instance_body_bbox = torch.cat([
                     body_bbox_center[img_id],
                     body_bbox_size[img_id]], dim=-1)

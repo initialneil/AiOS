@@ -66,7 +66,7 @@ def get_args_parser():
                         default=0,
                         type=int,
                         help='number of distributed processes')
-    parser.add_argument('--local-rank',
+    parser.add_argument('--local_rank',
                         type=int,
                         help='local rank for DistributedDataParallel')
     parser.add_argument('--amp',
