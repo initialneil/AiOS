@@ -42,7 +42,7 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
         
         # list video id
         self.video_list = [vid for vid in os.listdir(img_dir) if os.path.isdir(os.path.join(img_dir, vid))]
-        self.video_list = self.video_list[:20]
+        # self.video_list = self.video_list[:20]
         self.segments = {}
         self.data_list = []
         for video_id in tqdm(self.video_list):
