@@ -68,7 +68,7 @@ def gen_encoder_output_proposals(memory: Tensor,
             [grid_x.unsqueeze(-1), grid_y.unsqueeze(-1)], -1)  # H_, W_, 2
 
         scale = torch.cat([valid_W.unsqueeze(-1),
-                           valid_H.unsqueeze(-1)], 1).view(N_, 1, 1, 2)
+                           valid_H.unsqueeze(-1)], 1).view(N_, 1, 1, 2).cuda()
         grid = (grid.unsqueeze(0).expand(N_, -1, -1, -1) + 0.5) / scale
 
         if learnedwh is not None:
@@ -85,13 +85,13 @@ def gen_encoder_output_proposals(memory: Tensor,
     output_proposals = torch.log(output_proposals /
                                  (1 - output_proposals))  # unsigmoid
     output_proposals = output_proposals.masked_fill(
-        memory_padding_mask.unsqueeze(-1), float('inf'))
+        memory_padding_mask.unsqueeze(-1).cuda(), float('inf'))
     output_proposals = output_proposals.masked_fill(~output_proposals_valid,
                                                     float('inf'))
 
     output_memory = memory
     output_memory = output_memory.masked_fill(
-        memory_padding_mask.unsqueeze(-1), float(0))
+        memory_padding_mask.unsqueeze(-1).cuda(), float(0))
     output_memory = output_memory.masked_fill(~output_proposals_valid,
                                               float(0))
     return output_memory, output_proposals

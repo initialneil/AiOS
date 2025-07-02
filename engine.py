@@ -333,11 +333,15 @@ def inference(model,
         data_loader, 10, header, logger=logger):
         # i = i+1
         with torch.cuda.amp.autocast(enabled=args.amp):
+            for key in data_batch:
+                if isinstance(data_batch[key], torch.Tensor):
+                    data_batch[key] = data_batch[key].cuda()
+
             if need_tgt_for_training:
                 # outputs = model(samples, targets)
                 outputs, targets, data_batch_nc = model(data_batch)
             else:
-                outputs,targets, data_batch_nc = model(data_batch)
+                outputs, targets, data_batch_nc = model(data_batch)
         
         orig_target_sizes = torch.stack([t["size"] for t in targets], dim=0)
         result = postprocessors['bbox'](outputs, orig_target_sizes, targets, data_batch_nc)    

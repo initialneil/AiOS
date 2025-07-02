@@ -8,10 +8,10 @@ import torch.nn.functional as F
 from torch import nn
 from torchvision.ops.boxes import nms
 from torch import Tensor
-from pycocotools.coco import COCO
+# from pycocotools.coco import COCO
 from util import box_ops
 from util.misc import (NestedTensor, nested_tensor_from_tensor_list, accuracy,
-                       get_world_size, interpolate,
+                       get_world_size, interpolate, concat_iterative,
                        is_dist_avail_and_initialized, inverse_sigmoid)
 from detrsmpl.utils.demo_utils import convert_verts_to_cam_coord, xywh2xyxy, xyxy2xywh
 import numpy as np
@@ -1154,9 +1154,16 @@ class PostProcess_SMPLX_Multi_Infer(nn.Module):
         smplx_jaw_pose = smpl_pose[:, :, 156:]
         
         if 'ann_idx' in data_batch_nc:
-            image_idx=[target.cpu().numpy()[0] for target in data_batch_nc['ann_idx']]
+            # image_idx=[target.cpu().numpy()[0] for target in data_batch_nc['ann_idx']]
+            ann_idx = concat_iterative(data_batch_nc['ann_idx'].data)
+            image_idx = ann_idx.tolist()
 
         for bs in range(batch_size):
+            bb2img_trans = concat_iterative(data_batch_nc['bb2img_trans'].data)
+            img2bb_trans = concat_iterative(data_batch_nc['img2bb_trans'].data)
+            img = concat_iterative(data_batch_nc['img'].data)
+            img_shape = concat_iterative(data_batch_nc['img_shape'].data)
+        
             results.append({
                         'scores': scores[bs], 
                         'labels': labels[bs], 
@@ -1177,10 +1184,10 @@ class PostProcess_SMPLX_Multi_Infer(nn.Module):
                         'lhand_bbox': lhand_boxes[bs],
                         'rhand_bbox': rhand_boxes[bs],
                         'face_bbox': face_boxes[bs],
-                        'bb2img_trans': data_batch_nc['bb2img_trans'][bs],
-                        'img2bb_trans': data_batch_nc['img2bb_trans'][bs],
-                        'img': data_batch_nc['img'][bs],
-                        'img_shape': data_batch_nc['img_shape'][bs]
+                        'bb2img_trans': bb2img_trans[bs],
+                        'img2bb_trans': img2bb_trans[bs],
+                        'img': img[bs],
+                        'img_shape': img_shape[bs]
                     })
 
         if self.nms_iou_threshold > 0:

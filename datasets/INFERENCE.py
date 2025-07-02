@@ -55,6 +55,7 @@ class INFERENCE(torch.utils.data.Dataset):
         self.tmp_dir = os.path.join(self.output_path, 'temp_img')
         os.makedirs(self.tmp_dir, exist_ok=True)
         self.result_img_dir = os.path.join(self.output_path, 'res_img')
+        os.makedirs(self.result_img_dir, exist_ok=True)
         
         
         if not self.is_vid:

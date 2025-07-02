@@ -9,7 +9,7 @@ from torch import nn
 from torch import Tensor
 from util import box_ops
 from util.keypoint_ops import keypoint_xyzxyz_to_xyxyzz
-from util.misc import (NestedTensor, nested_tensor_from_tensor_list, inverse_sigmoid)
+from util.misc import (NestedTensor, nested_tensor_from_tensor_list, inverse_sigmoid, concat_iterative)
 from .backbones import build_backbone
 from .matcher import build_matcher
 from .transformer import build_transformer
@@ -1843,7 +1843,10 @@ class AiOSSMPLX(nn.Module):
 
         data_batch_coco = []
         instance_dict = {}
-        img_list = data_batch['img'].float()
+        # img_list = data_batch['img'].float()
+        img_list = torch.concat(data_batch['img'].data).float()
+        img_shape = data_batch['img_shape']
+
         batch_size, _, input_img_h, input_img_w = img_list.shape
         device = img_list.device
         masks = torch.ones((batch_size, input_img_h, input_img_w),
@@ -1853,21 +1856,32 @@ class AiOSSMPLX(nn.Module):
 
         # cv2.imread(data_batch['img_metas'][img_id]['image_path']).shape
         for img_id in range(batch_size):
-            img_h, img_w = data_batch['img_shape'][img_id]
+            img_h, img_w = img_shape[img_id]
             masks[img_id, :img_h, :img_w] = 0
             
             if not self.inference:
-                instance_body_bbox = torch.cat([data_batch['body_bbox_center'][img_id],\
-                                                data_batch['body_bbox_size'][img_id]],dim=-1)
-                instance_face_bbox = torch.cat([data_batch['face_bbox_center'][img_id],\
-                                                data_batch['face_bbox_size'][img_id]],dim=-1)
-                instance_lhand_bbox = torch.cat([data_batch['lhand_bbox_center'][img_id],\
-                                                data_batch['lhand_bbox_size'][img_id]],dim=-1)
-                instance_rhand_bbox = torch.cat([data_batch['rhand_bbox_center'][img_id],\
-                                                data_batch['rhand_bbox_size'][img_id]],dim=-1)
+                body_bbox_center = data_batch['body_bbox_center'].data
+                body_bbox_size = data_batch['body_bbox_size'].data
+                face_bbox_center = data_batch['face_bbox_center'].data
+                face_bbox_size = data_batch['face_bbox_size'].data
+                lhand_bbox_center = data_batch['lhand_bbox_center'].data
+                lhand_bbox_size = data_batch['lhand_bbox_size'].data
+                rhand_bbox_center = data_batch['rhand_bbox_center'].data
+                rhand_bbox_size = data_batch['rhand_bbox_size'].data
+                joint_img = data_batch['joint_img'].data
+                joint_trunc = data_batch['joint_trunc'].data
+                
+                instance_body_bbox = torch.cat([body_bbox_center[img_id],
+                                                body_bbox_size[img_id]],dim=-1)
+                instance_face_bbox = torch.cat([face_bbox_center[img_id],
+                                                face_bbox_size[img_id]],dim=-1)
+                instance_lhand_bbox = torch.cat([lhand_bbox_center[img_id],
+                                                 lhand_bbox_size[img_id]],dim=-1)
+                instance_rhand_bbox = torch.cat([rhand_bbox_center[img_id],
+                                                 rhand_bbox_size[img_id]],dim=-1)
 
-                instance_kp2d = data_batch['joint_img'][img_id].clone().float()
-                instance_kp2d_mask = data_batch['joint_trunc'][img_id].clone().float()
+                instance_kp2d = joint_img[img_id].clone().float()
+                instance_kp2d_mask = joint_trunc[img_id].clone().float()
                 instance_kp2d[:,:,2:] = instance_kp2d_mask
                 body_kp2d, _  = convert_kps(instance_kp2d, 'smplx_137', 'coco', approximate=True)
                 lhand_kp2d, _  = convert_kps(instance_kp2d, 'smplx_137', 'smplx_lhand', approximate=True)
@@ -1912,11 +1926,14 @@ class AiOSSMPLX(nn.Module):
                                                     device=device)
                 data_batch_coco.append(instance_dict)               
             else:
-                instance_body_bbox = torch.cat([data_batch['body_bbox_center'][img_id],\
-                                                data_batch['body_bbox_size'][img_id]],dim=-1)
+                body_bbox_center = concat_iterative(data_batch['body_bbox_center'].data)
+                body_bbox_size = concat_iterative(data_batch['body_bbox_size'].data)
+                instance_body_bbox = torch.cat([
+                    body_bbox_center[img_id],
+                    body_bbox_size[img_id]], dim=-1)
                 instance_dict = {}
                 # instance_dict['orig_size'] = data_batch['ori_shape'][img_id]
-                instance_dict['size'] = data_batch['img_shape'][img_id]  # after augmentation 
+                instance_dict['size'] = img_shape[img_id]  # after augmentation 
                 instance_dict['boxes'] = instance_body_bbox.float()    
                      
                 data_batch_coco.append(instance_dict)  

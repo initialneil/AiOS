@@ -161,6 +161,9 @@ class DeformableTransformerDecoderLayer(nn.Module):
         # pdb.set_trace()
         assert cross_attn_mask is None
 
+        if self_attn_mask is not None:
+            self_attn_mask = self_attn_mask.cuda()
+
         if self.self_attn is not None:
             q = k = self.with_pos_embed(tgt, tgt_query_pos)
             tgt2 = self.self_attn(q, k, tgt, attn_mask=self_attn_mask)[0]
@@ -170,7 +173,7 @@ class DeformableTransformerDecoderLayer(nn.Module):
             self.with_pos_embed(tgt, tgt_query_pos).transpose(0, 1),
             tgt_reference_points.transpose(0, 1).contiguous(),
             memory.transpose(0, 1), memory_spatial_shapes,
-            memory_level_start_index, memory_key_padding_mask).transpose(0, 1)
+            memory_level_start_index, memory_key_padding_mask.cuda()).transpose(0, 1)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
         # ffn

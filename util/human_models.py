@@ -256,4 +256,4 @@ class SMPL(object):
         ).astype(np.float32)
 
 smpl_x = SMPLX()
-smpl = SMPL()
+# smpl = SMPL()

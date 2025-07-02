@@ -142,6 +142,9 @@ test_result/
 
 # Resources as exception
 !resources/*
+data/
+results/
+models/aios/ops/log.txt
 
 # Loaded/Saved data files
 *.npz

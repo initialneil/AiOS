@@ -1016,11 +1016,13 @@ class SMPLX(SMPLH):
         leye_pose_mean = torch.zeros([3], dtype=self.dtype)
         reye_pose_mean = torch.zeros([3], dtype=self.dtype)
 
-        pose_mean = np.concatenate([
+        # pose_mean = np.concatenate([
+        pose_mean = torch.concat([
             global_orient_mean, body_pose_mean, jaw_pose_mean, leye_pose_mean,
             reye_pose_mean, self.left_hand_mean, self.right_hand_mean
         ],
-                                   axis=0)
+        # axis=0)
+        dim=0)
 
         return pose_mean
 

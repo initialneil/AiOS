@@ -80,8 +80,8 @@ class PositionEmbeddingSineHW(nn.Module):
         mask = tensor_list.mask
         assert mask is not None
         not_mask = ~mask
-        y_embed = not_mask.cumsum(1, dtype=torch.float32)
-        x_embed = not_mask.cumsum(2, dtype=torch.float32)
+        y_embed = not_mask.cumsum(1, dtype=torch.float32).cuda()
+        x_embed = not_mask.cumsum(2, dtype=torch.float32).cuda()
 
         # import pdb; pdb.set_trace()
 

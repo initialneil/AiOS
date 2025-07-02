@@ -304,7 +304,7 @@ class Transformer(nn.Module):
                                          device=src_flatten.device)
         level_start_index = torch.cat((spatial_shapes.new_zeros(
             (1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
-        valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
+        valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1).cuda()
         # two stage
         if self.two_stage_type in ['early', 'combine']:
             output_memory, output_proposals = gen_encoder_output_proposals(

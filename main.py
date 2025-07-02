@@ -59,13 +59,14 @@ def get_args_parser():
     parser.add_argument('--save_log', action='store_true')
     parser.add_argument('--to_vid', action='store_true')
     parser.add_argument('--inference', action='store_true')
-    # distributed training parameters
 
+    # distributed training parameters
+    parser.add_argument('--distributed', action='store_true')
     parser.add_argument('--rank',
                         default=0,
                         type=int,
                         help='number of distributed processes')
-    parser.add_argument('--local_rank',
+    parser.add_argument('--local-rank',
                         type=int,
                         help='local rank for DistributedDataParallel')
     parser.add_argument('--amp',
@@ -87,10 +88,12 @@ def build_model_main(args, cfg):
 
 
 def main(args):
-    utils.init_distributed_mode_ssc(args)
+    if args.distributed:
+        utils.init_distributed_mode_ssc(args)
     print('Loading config file from {}'.format(args.config_file))
-    shutil.copy2(args.config_file,'config/aios_smplx.py')
+    # shutil.copy2(args.config_file,'config/aios_smplx.py')
     from config.config import cfg
+    cfg.get_config_fromfile(args.config_file)
     
     if args.options is not None:
         cfg.merge_from_dict(args.options)
@@ -130,9 +133,11 @@ def main(args):
         with open(save_json_path, 'w') as f:
             json.dump(vars(args), f, indent=2)
         logger.info('Full config saved to {}'.format(save_json_path))
-    logger.info('world size: {}'.format(args.world_size))
-    logger.info('rank: {}'.format(args.rank))
-    logger.info('local_rank: {}'.format(args.local_rank))
+
+    if args.distributed:
+        logger.info('world size: {}'.format(args.world_size))
+        logger.info('rank: {}'.format(args.rank))
+        logger.info('local_rank: {}'.format(args.local_rank))
     logger.info('args: ' + str(args) + '\n')
 
     if args.frozen_weights is not None:

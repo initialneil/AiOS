@@ -466,6 +466,12 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor]):
         raise ValueError('not supported')
     return NestedTensor(tensor, mask)
 
+def concat_iterative(data_list):
+    if isinstance(data_list, list):
+        l = [concat_iterative(d) for d in data_list]
+        return torch.concat(l)
+    else:
+        return data_list
 
 @torch.jit.unused
 def _onnx_nested_tensor_from_tensor_list(

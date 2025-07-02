@@ -3,7 +3,8 @@ import cv2
 import random
 from config.config import cfg
 import math
-from .human_models import smpl_x, smpl
+from .human_models import smpl_x
+# from .human_models import smpl
 from .transforms import cam2pixel, transform_joint_to_other_db, transform_joint_to_other_db_batch
 from plyfile import PlyData, PlyElement
 import torch
