@@ -66,7 +66,7 @@ def get_args_parser():
                         default=0,
                         type=int,
                         help='number of distributed processes')
-    parser.add_argument('--local_rank',
+    parser.add_argument('--local-rank',
                         type=int,
                         help='local rank for DistributedDataParallel')
     parser.add_argument('--amp',
@@ -91,7 +91,7 @@ def main(args):
     if args.distributed:
         utils.init_distributed_mode_ssc(args)
     print('Loading config file from {}'.format(args.config_file))
-    # shutil.copy2(args.config_file,'config/aios_smplx.py')
+    shutil.copy2(args.config_file,'config/aios_smplx.tmp.py')
     from config.config import cfg
     cfg.get_config_fromfile(args.config_file)
     
@@ -138,7 +138,7 @@ def main(args):
         logger.info('world size: {}'.format(args.world_size))
         logger.info('rank: {}'.format(args.rank))
         logger.info('local_rank: {}'.format(args.local_rank))
-    logger.info('args: ' + str(args) + '\n')
+    # logger.info('args: ' + str(args) + '\n')
 
     if args.frozen_weights is not None:
         assert args.masks, 'Frozen training is meant for segmentation only'
@@ -174,10 +174,10 @@ def main(args):
     n_parameters = sum(p.numel() for p in model.parameters()
                        if p.requires_grad)
     logger.info('number of params:' + str(n_parameters))
-    logger.info('params:\n' + json.dumps(
-        {n: p.numel()
-         for n, p in model.named_parameters() if p.requires_grad},
-        indent=2))
+    # logger.info('params:\n' + json.dumps(
+    #     {n: p.numel()
+    #      for n, p in model.named_parameters() if p.requires_grad},
+    #     indent=2))
 
     param_dicts = get_param_dict(args, model_without_ddp)
     optimizer = torch.optim.AdamW(param_dicts,
@@ -227,6 +227,7 @@ def main(args):
     else:
         lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, args.lr_drop)
 
+    logger.info('Loading checkpoint...')
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')
         model_without_ddp.detr.load_state_dict(checkpoint['model'])
@@ -291,6 +292,7 @@ def main(args):
 
 
     if args.eval:
+        logger.info('Start Inference')
         os.environ['EVAL_FLAG'] = 'TRUE'
         if args.inference_input is not None and args.inference:
             inference(model,

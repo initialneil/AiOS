@@ -160,5 +160,5 @@ class Config(MMConfig):
 
 
 cfg = Config()
-# cfg.get_config_fromfile('config/aios_smplx.py')
+cfg.get_config_fromfile('config/aios_smplx.tmp.py')
 

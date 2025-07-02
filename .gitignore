@@ -24,8 +24,12 @@ sdist/
 var/
 wheels/
 *.egg-info/
+data/
 data/datasets/
 data/body_models/
+results/
+models/aios/ops/log.txt
+config/aios_smplx.tmp.py
 .installed.cfg
 *.egg
 MANIFEST
@@ -142,9 +146,6 @@ test_result/
 
 # Resources as exception
 !resources/*
-data/
-results/
-models/aios/ops/log.txt
 
 # Loaded/Saved data files
 *.npz
