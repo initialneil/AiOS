@@ -43,6 +43,7 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
         # list video id
         self.video_list = [vid for vid in os.listdir(img_dir) if os.path.isdir(os.path.join(img_dir, vid))]
         # self.video_list = self.video_list[:20]
+        
         self.segments = {}
         self.data_list = []
         for video_id in tqdm(self.video_list):
@@ -106,6 +107,18 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
         result = self.format(result)
             
         return result
+
+    def full_image_path(self, fn):
+        return osp.abspath(f'{self.frames_dir}/{fn}') if fn is not None else None
+
+    def full_aios_path(self, fn):
+        return osp.abspath(f'{self.aios_dir}/{fn}') if fn is not None else None
+
+    def full_teaser_path(self, fn):
+        return osp.abspath(f'{self.teaser_dir}/{fn}') if fn is not None else None
+
+    def full_dwpose_path(self, fn):
+        return osp.abspath(f'{self.dwpose_dir}/{fn}') if fn is not None else None
         
     def inference(self, outs):
         for out in outs:
@@ -113,6 +126,7 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
             ann_idx = out['image_idx']
             data = self.data_list[ann_idx]
             rlt = {}
+            os.makedirs(data['result_dir'], exist_ok=True)
 
             scores = out['scores'].clone().cpu().numpy()
             img_shape = out['img_shape'].cpu().numpy()[::-1] # w, h
@@ -127,6 +141,7 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
                          [0, 5000, img_shape[1]/2],
                          [0, 0, 1]])
             K = K * scale
+            K[2, 2] = 1
             rlt['K'] = K
 
             body_bbox = out['body_bbox']
@@ -197,7 +212,6 @@ class INFERENCE_youtube(torch.utils.data.Dataset):
             vis = cv2.resize(img, (vis_W, vis_H), interpolation=cv2.INTER_CUBIC)
 
             # save results
-            os.makedirs(data['result_dir'], exist_ok=True)
             if is_bad_segment:
                 result_path = data['result_path'].replace('.pt', '.bad.pt')
             else:
